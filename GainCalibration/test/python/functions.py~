@@ -1,0 +1,29 @@
+import os
+
+def create():
+    print "Preparing the submission with the following parameters:"
+    print "run number:        ",args.RUNNUMBER
+    print "input directory:   ",args.INDIR
+    print "output directory:  ",args.OUTDIR
+    
+    print "\nCleaning up existing directory ./Run_{} or creating it.".format(args.RUNNUMBER)
+    if not os.path.exists('Run_{}'.format(args.RUNNUMBER)):
+        os.makedirs('Run_{}'.format(args.RUNNUMBER))
+    else:
+        folder = './Run_{}'.format(args.RUNNUMBER)
+        for the_file in os.listdir(folder):
+            file_path = os.path.join(folder, the_file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path): shutil.rmtree(file_path)
+            except Exception, e:
+                print e
+    os.chdir('./Run_{}'.format(args.RUNNUMBER))
+    print "\nCreating 'config' file...",
+    config = open("config",'w')
+    config.write('run = {}'.format(args.RUNNUMBER))
+    config.write('indir = {}'.format(args.INDIR))
+    config.write('outdir = {}'.format(args.OUTDIR))
+    config.close()
+    print " Done."

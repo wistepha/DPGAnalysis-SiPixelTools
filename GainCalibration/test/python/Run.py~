@@ -1,0 +1,41 @@
+#!/bin/env python
+
+import argparse
+
+#TODO: try to add default values for the parsers
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("runnumber", help="Specifies the run number.")
+    #parser.add_argument("command", help="Specifies the action for Run to perform.")
+    subparsers = parser.add_subparsers(dest="COMMAND")#dest="INDIR"
+    parser_create = subparsers.add_parser("create", help="Creates a running-directory and prepares the files to submit.")
+    parser_create.add_argument("--source", dest="SOURCEDIR", help="Path to the files to be copied to INDIR.")
+    #parser_create = subparsers.add_parser("indir")
+    parser_create.add_argument("INDIR", help="Path to the input files.")
+    #parser_create = subparsers.add_parser("outdir")
+    parser_create.add_argument("OUTDIR", help="Path to the output files.")
+
+    parser_submit = subparsers.add_parser("submit", help="Submits the (batch) jobs previously prepared using the 'create' command.")
+    #parser_submit.add_argument(
+
+    parser_summary = subparsers.add_parser("summary", help="Creates the summary pdf and the related content.")
+
+    parser_payload = subparsers.add_parser("paylaod", help="Creates the payload.")   
+    
+    parser_submission = subparsers.add_parser("submission", help="Creates a full submission combining the create and submit command.") 
+
+    # parser.add_argument("--indir", 
+    #                   action="store", dest="INDIR", default="",
+    #                   help="Specifies the directory containing the data used as input.")
+    # parser.add_argument("--outdir", 
+    #                   action="store", dest="OUTDIR", default="",
+    #                   help="Specifies the directory to store the output data in.")
+    # parser.add_argument("--run", 
+    #                   action="store", dest="RUN", default="",
+    #                   help="Specifies the run number. ")
+
+    args = parser.parse_args()
+
+    print "args:\n",args
+    #print args.INDIR, "  ", args.command
