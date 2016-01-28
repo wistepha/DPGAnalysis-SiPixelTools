@@ -31,8 +31,9 @@ set_T3_specifics(){
   T2_FSYS='dcap://'
   T2_CHECK='/pnfs/iihe/'
   T2_TMP_DIR=/scratch/$USER
-  T2_LOC=file:///
+  T2_LOC=file://
   if [ $verbose -eq 1 ] ; then echo "Setting T3 specifics ..." ; fi
+  echo "Setting T3 specifics..."
 }
 
 set_T2_specifics(){

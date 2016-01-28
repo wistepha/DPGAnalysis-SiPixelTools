@@ -29,8 +29,12 @@ echo -e "\n\n Running CMSSW job:"
 cmsRun gain_calib_NUM_cfg.py
 cat *.log
 
+echo -e "************************"
+echo -e "  => ls: \n`ls`"
+echo -e "************************\n\n"
+
 echo -e "Copying output to pnfs:"
-echo "(T2_OUT_CP "GainCalibration.root" ${storedir}/NUM.root)"
+echo "(T2_OUT_CP "T2_LOC/GainCalibration.root" ${storedir}/NUM.root)"
 T2_OUT_CP T2_LOC/GainCalibration.root ${storedir}/NUM.root
 
 echo -e "end ... \n\n\n"

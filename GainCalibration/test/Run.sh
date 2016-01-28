@@ -615,6 +615,11 @@ for arg in $* ; do
   esac
 done
 
+checknumber='^[0-9]+$'
+if ! [[ $run =~ $checknumber ]] ; then
+   echo -e "\nError: Specified run number is not a valid number.\n"; exit 1
+fi
+
 if [ "$run" == "" ]; then 
   usage
 fi
