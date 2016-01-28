@@ -71,7 +71,7 @@ create(){
   rm -f filelist.txt es.log
 
   #cleaning output dir
-  echo "Cleaning output directory:"
+  echo -e "\e[1mCleaning output directory:\e[0m"
   set_specifics ${storedir}
   $T2_RM ${storedir}
   $T2_MKDIR ${storedir}
@@ -82,7 +82,7 @@ create(){
   set_specifics $indir
   if [ `is_on_castor $indir` -eq 1 ] ; then wait_for_staging ; fi
   
-  echo "Creating config files"
+  echo -e "\e[1mCreating config files\e[0m"
   echo "run = $run" 		>  $runningdir/config
   echo "indir = $indir" 	>> $runningdir/config
   echo "storedir = $storedir" 	>> $runningdir/config
@@ -90,9 +90,11 @@ create(){
 
   for i in `seq 0 39`;do
     file=GainCalibration_${i}_$run.$ext
-    echo "Checking file ${i}"
+    echo "\e[4mChecking file ${i}\e[0m"
     echo "$T2_LS $indir/$file"
-    $T2_LS $indir/$file 
+    if $T2_LS $indir/$file ;
+    then echo -e "\e[32mFound File.\e[0m"
+    else echo -e "\e[31mFile NOT found.\e[0m"
     # if [ `is_file_present $indir/$file` -eq 0 ];
     # then echo "File $file is not present in $indir ...";continue;
     # else
@@ -110,7 +112,7 @@ read_config(){
   storedir=`cat $config|grep -e "storedir ="|awk '{printf $3}'`
   calib_payload=`cat $config|grep -e "calib_payload ="|awk '{printf $3}'`
   if [ "$calib_payload" == "" ];then calib_payload='none';fi
-  echo -e "Reading config file $config"
+  echo -e "\e[1mReading config file $config \e0m"
   echo -e "run : $run"
   echo -e "indir : $indir"
   echo -e "storedir : $storedir"
@@ -159,6 +161,12 @@ wait_for_staging(){
 }
 
 submit_calib(){
+    echo -e "\e[1mCleaning output directory:\e[0m"
+    set_specifics ${storedir}
+    $T2_RM ${storedir}
+    $T2_MKDIR ${storedir}
+    $T2_CHMOD ${storedir}
+    echo -e "----------------------------------------------\n"
     echo "Preparing the submit_template."
     set_specifics $indir
     sed "s;INDIR;$indir;;s;RUN;$run;;s;.EXT;.$ext;;s;STOREDIR;${storedir};" submit_template.sh |\
@@ -168,12 +176,13 @@ submit_calib(){
     cd $runningdir
     echo "Creating the config files and submitting the jobs."
     for i in `seq 0 39`;do
+    #for i in `seq 1 1`;do
 	make_dir ${runningdir}/JOB_${i}
 	rm -f submit_${i}.sh
 	sed "s/NUM/${i}/" submit_template_${run}.sh > submit_${i}.sh
 	submit_to_queue GC_${run}_${i} ${runningdir}/JOB_${i}/stdout submit_${i}.sh
     done
-    echo "Done."
+    echo -e "\e[1mDone.\e[0m"
     cd -
 }
 
