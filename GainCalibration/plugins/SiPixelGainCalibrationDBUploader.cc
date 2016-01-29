@@ -400,6 +400,7 @@ void SiPixelGainCalibrationDBUploader::fillDatabase(const edm::EventSetup& iSetu
   edm::Service<cond::service::PoolDBOutputService> mydbservice;
   if(!mydbservice.isAvailable() ){
     edm::LogError("db service unavailable");
+    std::cout << "db service is unavailable" << std::endl;
     return;
   }
   else{

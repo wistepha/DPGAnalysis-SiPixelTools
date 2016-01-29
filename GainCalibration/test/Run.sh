@@ -517,10 +517,8 @@ make_payload_hlt(){
   $T2_CP $storedir/GainCalibration.root $file
 
   echo -e "\n\e[1mCleaning up the output location.\e[0m"
-  echo -e "RM: `$T2_RM$storedir/$payload`"
-  $T2_RM $storedir/$payload
-  echo -e "RM: `$T2_RM$storedir/$payload_root`"
-  $T2_RM $storedir/$payload_root
+  echo -e "RM: `$T2_RM $storedir/$payload`"
+  echo -e "RM: `$T2_RM $storedir/$payload_root`"
   
   #Changing some parameters in the python file:
   cat SiPixelGainCalibrationDBUploader_cfg.py |\
