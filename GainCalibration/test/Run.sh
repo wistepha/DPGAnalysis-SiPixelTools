@@ -54,7 +54,7 @@ create(){
   fi
   
   storedir=$storedir/GainRun_$run
-  echo "Setting parameters: "
+  echo "\e[1mSetting parameters: \e[0m"
   echo "run : $run"
   echo "indir : $indir"
   echo "storedir : $storedir"
@@ -90,11 +90,12 @@ create(){
 
   for i in `seq 0 39`;do
     file=GainCalibration_${i}_$run.$ext
-    echo "\e[4mChecking file ${i}\e[0m"
+    echo -e "\e[4mChecking file ${i}\e[0m"
     echo "$T2_LS $indir/$file"
     if $T2_LS $indir/$file ;
     then echo -e "\e[32mFound File.\e[0m"
     else echo -e "\e[31mFile NOT found.\e[0m"
+    fi
     # if [ `is_file_present $indir/$file` -eq 0 ];
     # then echo "File $file is not present in $indir ...";continue;
     # else
@@ -112,7 +113,7 @@ read_config(){
   storedir=`cat $config|grep -e "storedir ="|awk '{printf $3}'`
   calib_payload=`cat $config|grep -e "calib_payload ="|awk '{printf $3}'`
   if [ "$calib_payload" == "" ];then calib_payload='none';fi
-  echo -e "\e[1mReading config file $config \e0m"
+  echo -e "\e[1mReading config file $config \e[0m"
   echo -e "run : $run"
   echo -e "indir : $indir"
   echo -e "storedir : $storedir"
@@ -267,8 +268,13 @@ hadd_files(){
 submit_summary_new(){
 
   set_specifics ${storedir}
-  if [ `$T2_LS  $storedir/GainCalibration.root 2>&1|grep "No such"|wc -l` -eq 1 ]; then
-    echo "File $storedir/GainCalibration.root is not present ..."; exit ; fi ;
+  # if [ `$T2_LS  $storedir/GainCalibration.root 2>&1|grep "No such"|wc -l` -eq 1 ]; then
+  #   echo "File $storedir/GainCalibration.root is not present ..."; exit ; fi ;
+  if $T2_LS $storedir/GainCalibration.root;
+  then echo -e "\e[32mFound GainCalibration.root. Continuing.\e[0m";
+  else echo "\e[31mGainCalibration.root not found in $storedir!\e[0m";
+      echo "Consider using: srmHadd -x $PSI/store/user/swiederk/GC/1085/GainRun_1085/ -p * -o GainCalibration.root";exit;
+  fi
   stage_list_of_files $storedir/GainCalibration.root
 
   #making directories
@@ -420,17 +426,17 @@ compare_runs(){
 
 
 
-make_payload(){
+make_payload_offline(){
 
-  printf "Creating the payload.\n"
+  echo -e "\e[1mCreating the payload.\e[0m\n"
   set_specifics $storedir
   stage_list_of_files $storedir/GainCalibration.root
-  
-  file=$T2_TMP_DIR/GainCalibration_$run.root
+  mkdir $T2_TMP_DIR/payload
+  file=$T2_TMP_DIR/payload/GainCalibration_$run.root
   if [ `is_on_T3 $storedir` -eq 1 ];
   then file=file:///$file
   fi
-  printf "\nCopying $storedir/GainCalibration.root to $file"
+  echo -e "\n\e[1mCopying $storedir/GainCalibration.root to $file \e[0m"
   echo "----------------------------------------------"
   echo "$T2_CP $storedir/GainCalibration.root $file"
   $T2_CP $storedir/GainCalibration.root $file
@@ -438,84 +444,123 @@ make_payload(){
   
   
   payload=prova_GainRun${run}.db
-  #printf "\nCopying   $T2_CP prova.db $T2_TMP_DIR/$payload "
-  #echo "----------------------------------------------"
-  #$T2_CP prova.db $T2_TMP_DIR/$payload
+  # echo -e "\nCopying $T2_CP prova.db $T2_TMP_DIR/$payload "
+  # echo "----------------------------------------------"
+  # $T2_CP prova.db $T2_TMP_DIR/$payload
   payload_root=Summary_payload_Run${run}.root
   
+  echo -e "\n\e[1mCleaning up the output location.\e[0m"
   #echo -e "RM: $T2_RM$storedir/$payload"
-  printf "\nremoving: $storedir/$payload \n"
+  echo -e "\nremoving: $storedir/$payload \n"
   $T2_RM $storedir/$payload
   #echo -e "RM: $T2_RM$storedir/$payload_root"
-  printf "\nremoving: $storedir/$payload_root \n"
+  echo -e "\nremoving: $storedir/$payload_root \n"
   $T2_RM $storedir/$payload_root
 
   #Changing some parameters in the python file:
   cat SiPixelGainCalibrationDBUploader_cfg.py |\
     sed "s#file:///tmp/rougny/test.root#`file_loc $file`#"  |\
-    sed "s#sqlite_file:prova.db#sqlite_file:$T2_TMP_DIR/${payload}#" |\
-    sed "s#/tmp/rougny/histos.root#$T2_TMP_DIR/$payload_root#" > $T2_TMP_DIR/SiPixelGainCalibrationDBUploader_Offline_cfg.py
+    sed "s#sqlite_file:prova.db#sqlite_file:$T2_TMP_DIR/payload/${payload}#" |\
+    sed "s#/tmp/rougny/histos.root#$T2_TMP_DIR/payload/$payload_root#" > $T2_TMP_DIR/payload/SiPixelGainCalibrationDBUploader_Offline_cfg.py
     
   echo -e "\n--------------------------------------"
   echo "Making the payload for offline:"
   echo "  $storedir/$payload"
-  echo "  ==> Summary root file: $payload_root"
+  echo -e "\e[34m  ==> Summary root file: $payload_root \e[0m"
   echo -e "--------------------------------------\n"
 
-  cd $T2_TMP_DIR
+  cd $T2_TMP_DIR/payload
+  echo -e "\nFiles in `pwd`:"
+  ls
+  echo -e "\n"
   echo "  (\" cmsRun SiPixelGainCalibrationDBUploader_Offline_cfg.py \" )"
   cmsRun SiPixelGainCalibrationDBUploader_Offline_cfg.py 
-  echo " finish SiPixelGainCalibrationDBUploader_Offline_cfg.py "
+  #touch prova_GainRun${run}.db
+  #touch Summary_payload_Run${run}.root
+  echo -e "Finished SiPixelGainCalibrationDBUploader_Offline_cfg.py \n"
+  echo -e "\nFiles in `pwd`:"
+  ls
+  echo -e "\n"
   cd -
 
-  $T2_CP $T2_TMP_DIR/$payload $storedir/$payload
-  $T2_CP $T2_TMP_DIR/$payload_root $storedir/$payload_root
+  echo -e "\e[1mCopying   $T2_CP $T2_TMP_DIR/$payload $storedir/$payload "
+  echo -e "Copying   $T2_CP $T2_TMP_DIR/$payload_root $storedir/$payload_root \e[0m"
+  $T2_CP $T2_LOC/$T2_TMP_DIR/payload/$payload $storedir/$payload
+  $T2_CP $T2_LOC/$T2_TMP_DIR/payload/$payload_root $storedir/$payload_root
+   
+  rm -rf $T2_TMP_DIR/payload
+  #rm -f $T2_TMP_DIR/${payload}
+  #rm -f $T2_TMP_DIR/${payload_root}
   
-  echo "Copying   $T2_CP $T2_TMP_DIR/$payload $storedir/$payload "
-  echo "Copying   $T2_CP $T2_TMP_DIR/$payload_root $storedir/$payload_root "
- 
-  rm -f $T2_TMP_DIR/${payload}
-  rm -f $T2_TMP_DIR/${payload_root}
-  
-  echo "removing  $T2_TMP_DIR/${payload} "
-  echo "removing  $T2_TMP_DIR/${payload_root} "
+  echo -e "\e[1mCleaning up $T2_TMP_DIR \e[0m"
+}
+
+make_payload_hlt(){
   ###########################################   HLT PAYLOAD
-  exit
+  set_specifics $storedir
+  if mkdir $T2_TMP_DIR/payload;
+  then echo -e "\e[1mStarting process to create HLT payload.\e[0m";
+  else echo -e "\e[31mNot able to create folder in: $T2_TMP_DIR \nLeaving...\e[0m";exit;
+  fi
   payload=prova_GainRun${run}_HLT.db
-  cp prova.db $T2_TMP_DIR/$payload
+  # if cp prova.db $T2_TMP_DIR/payload/$payload;
+  #     then echo "there is something.";
+  #     else echo "prova.db is useless";
+  # fi
   payload_root=Summary_payload_Run${run}_HLT.root
-  
+
+  file=$T2_LOC$T2_TMP_DIR/payload/GainCalibration_$run.root
+  ##APPLY SAME CHANGES TO OFFLINE
+  echo -e "\n\e[1mCopying $storedir/GainCalibration.root to $file \e[0m"
+  echo "----------------------------------------------"
+  echo "$T2_CP $storedir/GainCalibration.root $file"
+  $T2_CP $storedir/GainCalibration.root $file
+
+  echo -e "\n\e[1mCleaning up the output location.\e[0m"
   echo -e "RM: `$T2_RM$storedir/$payload`"
+  $T2_RM $storedir/$payload
   echo -e "RM: `$T2_RM$storedir/$payload_root`"
+  $T2_RM $storedir/$payload_root
   
   #Changing some parameters in the python file:
   cat SiPixelGainCalibrationDBUploader_cfg.py |\
     sed "s#file:///tmp/rougny/test.root#`file_loc $file`#"  |\
-    sed "s#sqlite_file:prova.db#sqlite_file:$T2_TMP_DIR/${payload}#" |\
-    sed "s#/tmp/rougny/histos.root#$T2_TMP_DIR/$payload_root#" |\
+    sed "s#sqlite_file:prova.db#sqlite_file:$T2_TMP_DIR/payload/${payload}#" |\
+    sed "s#/tmp/rougny/histos.root#$T2_TMP_DIR/payload/$payload_root#" |\
     sed "s#cms.Path(process.gainDBOffline)#cms.Path(process.gainDBHLT)#"|\
     sed "s#record = cms.string('SiPixelGainCalibrationOfflineRcd')#record = cms.string('SiPixelGainCalibrationForHLTRcd')#"|\
-    sed "s#GainCalib_TEST_offline#GainCalib_TEST_hlt#" > SiPixelGainCalibrationDBUploader_HLT_cfg.py
+    sed "s#GainCalib_TEST_offline#GainCalib_TEST_hlt#" > $T2_TMP_DIR/payload/SiPixelGainCalibrationDBUploader_HLT_cfg.py
   
   echo -e "\n--------------------------------------"
   echo "Making the payload for HLT:"
   echo "  $storedir/$payload"
-  echo "  ==> Summary root file: $payload_root"
+  echo -e "\e[34m  ==> Summary root file: $payload_root \e[0m"
   echo -e "--------------------------------------\n"
   
+  cd $T2_TMP_DIR/payload
+  echo -e "\nFiles in `pwd`:"
+  ls
+  echo -e "\n"
+
   echo "  (\" cmsRun SiPixelGainCalibrationDBUploader_HLT_cfg.py \" )"
   cmsRun SiPixelGainCalibrationDBUploader_HLT_cfg.py
   
-  ls $T2_TMP_DIR
-  $T2_CP $T2_TMP_DIR/$payload $storedir/$payload
-  $T2_CP $T2_TMP_DIR/$payload_root $storedir/$payload_root
+  echo -e "\nFiles in `pwd`:"
+  ls
+  echo -e "\n"
+  cd -
+
+  $T2_CP $T2_LOC/$T2_TMP_DIR/payload/$payload $storedir/$payload
+  $T2_CP $T2_LOC/$T2_TMP_DIR/payload/$payload_root $storedir/$payload_root
   
-  rm -f $T2_TMP_DIR/${payload}
-  rm -f $T2_TMP_DIR/${payload_root}
+  echo -e "\e[1mCleaning up $T2_TMP_DIR\e[0m"
+  rm -rf $T2_TMP_DIR/payload
+  #rm -f $T2_TMP_DIR/${payload}
+  #rm -f $T2_TMP_DIR/${payload_root}
   
   ####################################
    
-  rm -f $file  
+  #rm -f $file  
 }
 
 
@@ -575,8 +620,6 @@ done
 }
 
 
-
-
 create=0
 submit=0
 resubmit=0
@@ -589,6 +632,8 @@ compare=0
 verbose=0
 ijob=-1
 prova=0
+prova_offline=0
+prova_hlt=0
 twiki=0
 comp_twiki=0
 info=0
@@ -615,6 +660,8 @@ for arg in $* ; do
     -pdf)          pdf=1        ; run=$2 ; shift ;;
     -compare)      compare=1    ; run=0  ; run1=$2 ; file1=$3 ; run2=$4 ; file2=$5 ; shift ; shift ; shift ; shift ; shift ;;
     -payload)      prova=1      ; run=$2 ; shift ;;
+    -payload_offline)  prova_offline=1;run=$2;shift;;
+    -payload_hlt)  prova_hlt=1  ; run=$2 ; shift ;;
     -twiki)        twiki=1      ; run=$2 ; shift ;;
     -comp_twiki)   comp_twiki=1 ; run=$2 ; shift ;;
     -info)         info=1       ; run=$2 ; shift ;;
@@ -683,9 +730,19 @@ fi
 
 if [ $prova -eq 1 ]; then
   read_config
-  make_payload
+  make_payload_offline
+  make_payload_hlt
 fi
 
+if [ $prova_offline -eq 1 ]; then
+  read_config
+  make_payload_offline
+fi
+
+if [ $prova_hlt -eq 1 ]; then
+  read_config
+  make_payload_hlt
+fi
 
 if [ $twiki -eq 1 ]; then
   read_config
