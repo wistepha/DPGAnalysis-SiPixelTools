@@ -1,4 +1,9 @@
-import argparse,os,subprocess
+import Run,argparse,os,subprocess
+from siteclass import site
+
+global_supportedsitesonT3 = ['T3']
+global_supportedsitesonLXPLUS = ['CASTOR','EOS']
+global_sitekeys = [['srm','T3'],['eos','EOS']]
 
 def argparsing():
     parser = argparse.ArgumentParser()
@@ -7,6 +12,7 @@ def argparsing():
     subparsers = parser.add_subparsers(dest="COMMAND")#dest="INDIR"
     parser_create = subparsers.add_parser("create", help="Creates a running-directory and prepares the files to submit.")
     parser_create.add_argument("--source", dest="SOURCEDIR", help="Path to the files to be copied to INDIR.")
+    parser_create.add_argument("--on_site", dest="ON_SITE", default="T3",help="Site on which the code is performed on.")
     #parser_create = subparsers.add_parser("indir")
     parser_create.add_argument("INDIR", help="Path to the input files.")
     #parser_create = subparsers.add_parser("outdir")
@@ -17,7 +23,7 @@ def argparsing():
 
     parser_summary = subparsers.add_parser("summary", help="Creates the summary pdf and the related content.")
 
-    parser_payload = subparsers.add_parser("paylaod", help="Creates the payload.")   
+    parser_payload = subparsers.add_parser("payload", help="Creates the payload.")   
     
     parser_submission = subparsers.add_parser("submission", help="Creates a full submission combining the create and submit command.") 
 
@@ -34,10 +40,13 @@ def argparsing():
     args = parser.parse_args()
     return args
 
-def set_commands(path):
-    if path.find('srm') != -1:
-        print "Applying the T3 settings."
-
+#def set_commands(args):
+    # global global_sitekeys
+    # for entry in global_sitekeys:
+    #     if args.INDIR.find(entry[0]) != -1:
+    #         print args.INDIR.find(entry[0])
+    #         print "found site: ",entry[1]    
+    
 
     # wc = subprocess.check_output('uname -a | grep t3 | wc -l', shell=True)
     # #print wc
@@ -69,11 +78,15 @@ def create(args):
 
     print "\nCreating 'config' file...",
     config = open("config",'w')
-    config.write('run = {}'.format(args.RUNNUMBER))
-    config.write('indir = {}'.format(args.INDIR))
-    config.write('outdir = {}'.format(args.OUTDIR))
+    config.write('run = {}\n'.format(args.RUNNUMBER))
+    config.write('indir = {}\n'.format(args.INDIR))
+    config.write('outdir = {}\n'.format(args.OUTDIR))
     config.close()
     print " Done."
 
-    set_commands(args.INDIR)
+    current_site = site(args)
+    current_site.getName()
+    current_site.cp_in_loc("0.root")
+
+    #set_commands(args)
     #'srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/swiederk/GC/test'
