@@ -1,0 +1,119 @@
+#!/bin/env python
+import subprocess,os
+
+#place holder for future, more specific error handling
+class RunError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+class site:
+    #class containing all the information of the sites involved
+    #can perform all needed operations on those sites
+    def __init__(self,siteData):
+        self.runNumber = siteData.RUNNUMBER
+        try:       
+            self.siteName = siteData.ON_SITE 
+            self.indir siteData.INDIR 
+            self.outdir = siteData.OUTDIR 
+        except AttributeError:
+            try:
+                f = open("Run_{}/config".format(siteData.RUNNUMBER))
+            except:
+                raise RunError("Could not find the config file for run: {}".format(siteData.RUNNUMBER))
+            for line in f:
+                if "indir" in line:
+                    self.indir = line.split()[2]
+                elif "outdir" in line:
+                    self.outdir = line.split()[2]
+                elif "site" in line:
+                    self.siteName = line.split()[2]
+                    
+                     
+        self.sourceDir = 'unknown'
+        self.destDir = 'unknown'
+        self.remoteDir = 'unknown'
+
+        #magic strings related to site (initialisation here)
+        self.copyStr = 'unknown'
+        self.rmStr = 'unknown'
+        self.mkdirStr = 'unknown'
+        self.lsStr = 'unknown'
+        self.submitCall = 'unknown'
+        # self.incopystr = 'unknown'
+        # self.outcopystr = 'unknown'
+        self.prefix = ''
+
+        #self.username = subprocess.check_output('uname -a | grep t3 | wc -l', shell=True)
+        
+        if self.siteName == "T3":
+            self.copyStr = "gfal-copy"
+            self.rmStr = "gfal-rm"
+            self.mkdirStr = "srmmkdir"
+            self.lsStr = "gfal-ls"
+            self.remoteDir = "/scratch/"+os.environ['USER']
+            self.prefix = 'file:////'
+            self.submitCall = "qsub -q long.q -j y -N NAME -o LOG FILE"
+            
+        elif self.siteName == "lxplus":
+            self.copyStr = "put lxplus copy string here"
+
+        #deprecated: parse indir and outdir to get site information
+        #pitfall: indir path can be ambiguous
+        # self.csite = subprocess.check_output('uname -a | grep t3 | wc -l', shell=True)
+        # if self.csite == '1\n':
+        #     #print "yes"
+        #     self.loc = '/scratch/'
+
+        # if args.INDIR.find('srm://t3') != -1:
+        #     self.inname = 'T3'
+        #     self.incopystr = 'gfal-copy'
+        #     self.prefix = 'file:////'
+        # if args.OUTDIR.find('srm://t3') != -1:
+        #     self.outname = 'T3'
+        #     self.outcopystr = 'gfak-copy'
+        #     self.prefix = 'file:////'
+
+    def printInfo(self):
+        print "Site Information:"
+        print "  site:          ",self.siteName
+        print "  indir:         ",self.indir
+        print "  outdir:        ",self.outdir
+        print "  copy string:   ",self.copyStr
+        print "  prefix:        ",self.prefix
+        print "  remove string: ",self.rmStr
+        print "  mkdir string:  ",self.mkdirStr
+        print "  ls string:     ",self.lsStr
+        print "  remote dir:    ",self.remoteDir
+        print
+
+    def create_config(self):
+        f = open("config","w+")
+        f.write("run = {}\n".format(self.runNumber))
+        f.write("indir = {}\n".format(self.indir))
+        f.write("outdir = {}\n".format(self.outdir))
+        f.write("site = {}\n".format(self.siteName))
+        #date = "\nCreated on: "+subprocess.check_output(["date"])
+        f.write("\nCreated on: "+subprocess.check_output(["date"]))
+
+    #def copy(self):
+
+    def clean_outDir(self):
+        print "Recreating output directory."
+        self.dirString = "-r"
+        DEVNULL = open(os.devnull, 'r+b', 0)
+        subprocess.call([self.rmStr,self.dirString,self.outdir],stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
+        DEVNULL.close()
+        if subprocess.call([self.mkdirStr,self.outdir]):
+            raise RunError("Failed to create outdir.")
+
+    def cp_in_loc(self,sourcefile,destfile):
+        self.dest = self.prefix + destfile+"/."
+        self.source = self.indir+"/"+sourcefile
+        print "Copying ",self.source," to ",self.dest
+        subprocess.call([self.incopystr,self.source,self.dest])
+
+    def cp_loc_out(self,sourcefile,destfile):
+        self.dest = self.outdir+"/"+destfile
+        self.source = self.prefix+sourcefile
+        print "Copying ",self.source," to ",self.dest
+        subprocess.call([self.outcopystr,self.source,self.dest])

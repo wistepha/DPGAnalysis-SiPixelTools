@@ -47,8 +47,6 @@ exit
 
 create(){
   if [ "$indir" == "" ] && [ "$storedir" == "" ];then
-    #indir=/castor/cern.ch/user/${USER:0:1}/$USER/GainCalib_run$run
-    #storedir=/castor/cern.ch/user/${USER:0:1}/$USER/
     indir=/store/group/dpg_tracker_pixel/comm_pixel/GainCalibrations/Run_$run
     storedir=/store/group/dpg_tracker_pixel/comm_pixel/GainCalibrations/Run_$run
   fi

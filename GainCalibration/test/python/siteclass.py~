@@ -1,0 +1,93 @@
+#!/bin/env python
+import subprocess,os
+
+#place holder for future, more specific error handling
+class RunError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+class site:
+    #class containing all the information of the sites involved
+    #can perform all needed operations on those sites
+    def __init__(self,RUNNUMBER,ON_SITE,INDIR,OUTDIR,SOURCEDIR,DESTDIR):
+        self.runNumber = RUNNUMBER
+        self.siteName = ON_SITE
+        self.indir = INDIR
+        self.outdir = OUTDIR                    
+                     
+        self.sourceDir = SOURCEDIR
+        self.destDir = DESTDIR
+
+        #magic strings related to site (initialisation here)
+        self.remoteDir = 'unknown'
+        self.copyStr = 'unknown'
+        self.rmStr = 'unknown'
+        self.mkdirStr = 'unknown'
+        self.lsStr = 'unknown'
+        self.submitCall = 'unknown'
+        # self.incopystr = 'unknown'
+        # self.outcopystr = 'unknown'
+        self.prefix = ''
+        self.fileAccessStr = 'unknown'
+        
+        if self.siteName == "T3":
+            self.copyStr = "gfal-copy"
+            self.rmStr = "gfal-rm"
+            self.mkdirStr = "srmmkdir"
+            self.lsStr = "gfal-ls"
+            self.remoteDir = "/scratch/"+os.environ['USER']
+            self.prefix = 'file:////'
+            self.submitCall = "qsub -q all.q -j y -N NAME -o LOG FILE"
+            self.fileAccessStr = "dcap://t3se01.psi.ch:22125/pnfs"
+            
+            
+        elif self.siteName == "lxplusEOS":
+            self.copyStr = "put lxplus copy string here"
+            self.fileAccessStr = "root://eoscms//eos/cms/store"
+
+    def printInfo(self):
+        print "Site Information:"
+        print "  site:          ",self.siteName
+        print "  indir:         ",self.indir
+        print "  outdir:        ",self.outdir
+        print "  sourcedir:     ",self.sourceDir
+        print "  destdir:       ",self.destDir
+        print "  copy string:   ",self.copyStr
+        print "  prefix:        ",self.prefix
+        print "  remove string: ",self.rmStr
+        print "  mkdir string:  ",self.mkdirStr
+        print "  ls string:     ",self.lsStr
+        print "  remote dir:    ",self.remoteDir
+        print
+
+    def create_config(self):
+        f = open("config","w+")
+        f.write("run = {}\n".format(self.runNumber))
+        f.write("indir = {}\n".format(self.indir))
+        f.write("outdir = {}\n".format(self.outdir))
+        f.write("site = {}\n".format(self.siteName))
+        f.write("source = {}\n".format(self.sourceDir))
+        f.write("dest = {}\n".format(self.destDir))
+        f.write("\nCreated on: "+subprocess.check_output(["date"]))
+
+    #USELESS?
+    def clean_outDir(self):
+        print "Recreating output directory."
+        self.dirString = "-r"
+        DEVNULL = open(os.devnull, 'r+b', 0)
+        subprocess.call([self.rmStr,self.dirString,self.outdir],stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
+        DEVNULL.close()
+        if subprocess.call([self.mkdirStr,self.outdir]):
+            raise RunError("Failed to create outdir.")
+
+    def cp_in_loc(self,sourcefile,destfile):
+        self.dest = self.prefix + destfile+"/."
+        self.source = self.indir+"/"+sourcefile
+        print "Copying ",self.source," to ",self.dest
+        subprocess.call([self.incopystr,self.source,self.dest])
+
+    def cp_loc_out(self,sourcefile,destfile):
+        self.dest = self.outdir+"/"+destfile
+        self.source = self.prefix+sourcefile
+        print "Copying ",self.source," to ",self.dest
+        subprocess.call([self.outcopystr,self.source,self.dest])

@@ -1,17 +1,40 @@
 #!/bin/env python
 
-import functions as f
-from siteclass import site
+from functions import *
+from siteclass import *
 
-#TODO: try to add default values for the parsers
 if __name__ == "__main__":
 
-    args = f.argparsing()
+    try:
+        args = argparsing()
+        #print "args:\n",args,"\n"
 
+        if args.COMMAND == 'create':
+            currentSite = site(args)
+            currentSite.printInfo()
+            create(currentSite)
 
-    print "args:\n",args
-    #print "command: ",args.COMMAND
+        elif args.COMMAND == 'submit':
+            currentSite = readFromConfig(args.RUNNUMBER)
+            submit(currentSite)
 
-    if args.COMMAND == "create":
-        f.create(args)
+        elif args.COMMAND == 'hadd':
+            currentSite = readFromConfig(args.RUNNUMBER)
+            hadd(currentSite)
+
+        elif args.COMMAND == 'summary':
+            currentSite = readFromConfig(args.RUNNUMBER)
+            write_summary(currentSite)
+
+        elif args.COMMAND == 'payload':
+            currentSite = readFromConfig(args.RUNNUMBER)
+            create_payload(currentSite,args.YEAR,args.VERSION,"offline")
+            create_payload(currentSite,args.YEAR,args.VERSION,"HLT")
+
+        else:
+            raise RunError("Invalid command: {}".format(args.COMMAND))
+
+    except RunError as e:
+        print "EXCEPTION OCCURRED:"
+        print "  ",e.message
 
