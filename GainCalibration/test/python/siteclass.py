@@ -26,7 +26,8 @@ class site(object):
         self.mkdirStr = None
         self.lsStr = None
         self.submitCall = None
-        self.prefix = None
+        self.prefix_remote = None
+        self.prefix_loc = None
         self.fileAccessStr = None
         self.xrootStr = None
         self.haddcpStr = None
@@ -41,7 +42,8 @@ class site(object):
             self.mkdirStr = "srmmkdir"
             self.lsStr = "gfal-ls"
             self.remoteDir = "/scratch/"+os.environ['USER']
-            self.prefix = 'file:////'
+            self.prefix_remote = ''
+            self.prefix_loc = 'file:////'
             self.submitCall = "qsub OPTIONS -q long.q -j y -N NAME -o LOG FILE"
             self.fileAccessStr = "dcap://t3se01.psi.ch:22125/pnfs"
             self.xrootStr = "root://t3se01.psi.ch//"
@@ -56,7 +58,8 @@ class site(object):
             self.mkdirStr = "eos mkdir"
             self.lsStr = "eos ls"
             self.remoteDir = "/tmp/"+os.environ['USER']
-            self.prefix = ''
+            self.prefix_remote = "root://eoscms.cern.ch//eos/cms/"
+            self.prefix_loc = ''
             self.submitCall = "bsub -q cmscaf1nw -J NAME -eo LOG < FILE"
             self.fileAccessStr = "root://eoscms//eos/cms/store"            
             self.xrootStr = "root://eoscms.cern.ch//eos/cms/"
@@ -83,7 +86,8 @@ class site(object):
         print "  indir:         ",self.indir
         print "  outdir:        ",self.outdir
         print "  copy string:   ",self.copyStr
-        print "  prefix:        ",self.prefix
+        print "  prefix_remote: ",self.prefix_remote
+        print "  prefix_loc:    ",self.prefix_loc
         print "  remove string: ",self.rmStr
         print "  mkdir string:  ",self.mkdirStr
         print "  ls string:     ",self.lsStr
@@ -97,9 +101,11 @@ class site(object):
         print "Recreating output directory."
         dirString = "-r"
         DEVNULL = open(os.devnull, 'r+b', 0)
-        subprocess.call([self.rmStr,dirString,self.outdir],stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
+        removeStr = self.rmStr+" "+dirString+" "+self.outdir
+        subprocess.call(removeStr.split(),stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
         DEVNULL.close()
-        if subprocess.call([self.mkdirStr,self.outdir]):
+        makeDirStr = self.mkdirStr+" "+self.outdir
+        if subprocess.call(makeDirStr.split()):
             raise RunError("Failed to create outdir.")
 
     def resetSite(self,args):

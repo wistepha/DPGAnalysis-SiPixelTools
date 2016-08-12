@@ -20,8 +20,8 @@ echo -e "************************\n\n"
 
 echo -e "Copying file from storage to local ..."
 file=GainCalibration_NUM_RUN.dmp
-echo "(COPYSTRING $indir/$file PREFIX$startdir/$file)"
-COPYSTRING $indir/$file PREFIX$startdir/$file
+echo "(COPYSTRING PREFIX_REMOTE$indir/$file PREFIX_LOC$startdir/$file)"
+COPYSTRING PREFIX_REMOTE$indir/$file PREFIX_LOC$startdir/$file
 echo -e "************************"
 echo -e "  => ls: \n`ls`"
 echo -e "************************\n\n"
@@ -37,8 +37,8 @@ echo -e "  => ls: \n`ls`"
 echo -e "************************\n\n"
 
 echo -e "Copying output to pnfs:"
-echo "(COPYSTRING "PREFIX/$startdir/GainCalibration.root" ${storedir}/NUM.root)"
-COPYSTRING PREFIX/$startdir/GainCalibration.root ${storedir}/NUM.root
+echo "(COPYSTRING PREFIX_LOC/$startdir/GainCalibration.root PREFIX_REMOTE${storedir}/NUM.root)"
+COPYSTRING PREFIX_LOC$startdir/GainCalibration.root PREFIX_REMOTE${storedir}/NUM.root
 
 echo -e "end ... \n\n\n"
 

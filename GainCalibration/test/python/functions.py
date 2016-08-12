@@ -160,7 +160,8 @@ def createJobFiles(currentSite):
     DEVNULL = open(os.devnull, 'r+b', 0) 
     for fileNumber in range(40): #40 FEDs
         dmpFileName = "GainCalibration_"+str(fileNumber)+"_"+str(currentSite.runNumber)+".dmp"
-        if subprocess.call([currentSite.lsStr,currentSite.indir+"/"+dmpFileName],stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL):
+        filePath = currentSite.lsStr+" "+currentSite.indir+"/"+dmpFileName
+        if subprocess.call(filePath,shell=True,stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL):
             print "WARNING: Could not find file "+dmpFileName+" in "+currentSite.indir+"!"
             #raise RunError("Could not find file "+dmpFileName+" in "+currentSite.indir+"!")
         #python cfg
@@ -186,7 +187,8 @@ def createJobFiles(currentSite):
             line = line.replace('REMOTEDIR',currentSite.remoteDir)
             line = line.replace('COPYSTRING',currentSite.copyStr)
             line = line.replace('NUM',str(fileNumber))
-            line = line.replace('PREFIX',currentSite.prefix)
+            line = line.replace('PREFIX_REMOTE',currentSite.prefix_remote)
+            line = line.replace('PREFIX_LOC',currentSite.prefix_loc)
             line = line.replace('RUN',currentSite.runNumber)
             line = line.rstrip("\n")
             print line
@@ -276,7 +278,7 @@ def sendJob(currentSite,jobNumber):
     callString = callString.replace('FILE',subFileName)
     #print "Sending job {} ({})".format(jobName,subFileName)
     #print callString
-    subprocess.call(callString.split())
+    subprocess.call(callString,shell=True)
 
 def copyFromSource(currentSite,sourceSite):
     #copies the .dmp files from the source site to the input directory
@@ -501,7 +503,8 @@ def create_payload(sites,year,version,Type):
         line = line.replace('CFGFILE',DBcfg)
         line = line.replace('REMOTEDIR',remoteDir)
         line = line.replace('COPYSTRING',sites['currentSite'].copyStr+" -f ")
-        line = line.replace('PREFIX',sites['currentSite'].prefix)
+        line = line.replace('PREFIX_REMOTE',sites['currentSite'].prefix_remote)
+        line = line.replace('PREFIX_LOC',sites['currentSite'].prefix_loc)
         line = line.replace('PAYLOAD',tag+".db")
         line = line.replace('ROOTFILE',rootFileName)
         line = line.rstrip("\n")
@@ -547,5 +550,6 @@ def copySD(sites,args):
     if sites['destSite'].isValid():
         copyToDest(sites['currentSite'],sites['destSite'])
 
+    
     
 
