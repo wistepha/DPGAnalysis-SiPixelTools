@@ -21,7 +21,7 @@ echo -e "************************\n\n"
 echo -e "Copying file from storage to local ..."
 file=GainCalibration.root
 echo "(COPYSTRING $storedir/$file PREFIX$startdir/$file)"
-COPYSTRING $storedir/$file PREFIX$startdir/$file
+COPYSTRING PREFIX_REMOTE$storedir/$file PREFIX_LOC$startdir/$file
 echo `pwd`
 echo -e "************************"
 echo -e "  => ls: \n`ls`"
@@ -38,10 +38,10 @@ echo -e "  => ls: \n`ls`"
 echo -e "************************\n\n"
 
 echo -e "Copying output to pnfs:"
-echo "(COPYSTRING "PREFIX/$startdir/PAYLOAD" ${storedir}/PAYLOAD)"
-COPYSTRING PREFIX/$startdir/PAYLOAD ${storedir}/PAYLOAD
-echo "(COPYSTRING "PREFIX/$startdir/ROOTFILE" ${storedir}/ROOTFILE)"
-COPYSTRING PREFIX/$startdir/ROOTFILE ${storedir}/ROOTFILE
+echo "(COPYSTRING PREFIX_LOC/$startdir/PAYLOAD PREFIX_REMOTE${storedir}/PAYLOAD)"
+COPYSTRING PREFIX_LOC/$startdir/PAYLOAD PREFIX_REMOTE${storedir}/PAYLOAD
+echo "(COPYSTRING PREFIX_LOC/$startdir/ROOTFILE PREFIX_REMOTE${storedir}/ROOTFILE)"
+COPYSTRING PREFIX_LOC/$startdir/ROOTFILE PREFIX_REMOTE${storedir}/ROOTFILE
 echo -e "end ... \n\n\n"
 
 cp *.log ${mydir}/payload/

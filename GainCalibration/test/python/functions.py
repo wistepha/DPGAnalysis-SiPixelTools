@@ -515,7 +515,8 @@ def create_payload(sites,year,version,Type):
         line = line.replace('TYPE',Type)
         line = line.replace('CFGFILE',DBcfg)
         line = line.replace('REMOTEDIR',remoteDir)
-        line = line.replace('COPYSTRING',sites['currentSite'].copyStr+" -f ")
+        #maybe use and overwrite flag?
+        line = line.replace('COPYSTRING',sites['currentSite'].copyStr)
         line = line.replace('PREFIX_REMOTE',sites['currentSite'].prefix_remote)
         line = line.replace('PREFIX_LOC',sites['currentSite'].prefix_loc)
         line = line.replace('PAYLOAD',tag+".db")
@@ -533,7 +534,7 @@ def create_payload(sites,year,version,Type):
     callString = callString.replace('FILE',DBsub)
     print "Sending the job: {} (script: {})".format(jobName,DBsub)
     #print "Sending the job with: \n",callString,"\n"
-    subprocess.call(callString.split())
+    subprocess.call(callString,shell=True)
     print "\n"
 
     if sites['destSite'].isValid():

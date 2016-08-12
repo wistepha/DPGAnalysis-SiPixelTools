@@ -53,7 +53,7 @@ class site(object):
             # self.mountPrefix = ''
       
         if self.siteName == "lxplusEOS":
-            self.copyStr = "eos cp"
+            self.copyStr = "xrdcp"
             self.rmStr = "eos rm"
             self.mkdirStr = "eos mkdir"
             self.lsStr = "eos ls"
