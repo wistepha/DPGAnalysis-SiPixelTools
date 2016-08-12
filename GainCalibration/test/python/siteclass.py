@@ -63,7 +63,7 @@ class site(object):
             self.submitCall = "bsub -q cmscaf1nw -J NAME -eo LOG < FILE"
             self.fileAccessStr = "root://eoscms//eos/cms/store"            
             self.xrootStr = "root://eoscms.cern.ch//eos/cms/"
-            self.haddcpStr = "GainCalibration.root root://eoscms//eos/cms/"+self.outdir+"/."
+            self.haddcpStr = "GainCalibration.root root://eoscms//eos/cms/"+self.outdir+"/"
             # self.mounStr = "eos -b fuse mount FOLDER"
             # self.umountStr = "eos -b fuse umount FOLDER"
             # self.mountPrefix = "/eos/cms/"

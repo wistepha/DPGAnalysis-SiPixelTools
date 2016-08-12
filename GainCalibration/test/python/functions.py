@@ -240,7 +240,7 @@ def hadd(currentSite):
     #print command.split()
     subprocess.call(command.split())
     print (currentSite.copyStr+" "+currentSite.haddcpStr).split()
-    subprocess.call((currentSite.copyStr+" -f "+currentSite.haddcpStr),shell=True)
+    subprocess.call((currentSite.copyStr+" -f "+currentSite.haddcpStr+"GainCalibration.root"),shell=True)
     subprocess.call("rm GainCalibration.root",shell=True)
 
     # command = "hadd GainCalibration.root"
