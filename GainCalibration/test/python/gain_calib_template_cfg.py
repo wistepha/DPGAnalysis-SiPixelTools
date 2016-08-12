@@ -5,8 +5,8 @@ process = cms.Process("PIXEL")
 process.load('Configuration.StandardSequences.Services_cff')
 process.TFileService = cms.Service("TFileService", fileName = cms.string('GainCalibration.root'))
 process.MessageLogger = cms.Service("MessageLogger",
-    text_output = cms.untracked.PSet(threshold = cms.untracked.string('ERROR')),
-    destinations = cms.untracked.vstring('text_output')
+    error_log = cms.untracked.PSet(threshold = cms.untracked.string('ERROR')),
+    destinations = cms.untracked.vstring('error_log')
     )
 
 # GlobalTag
@@ -19,7 +19,7 @@ process.load('Configuration.StandardSequences.RawToDigi_Data_cff')
 process.source = cms.Source("PixelSLinkDataInputSource",
     fedid = cms.untracked.int32(-1),
     runNumber = cms.untracked.int32(-1),
-    fileNames = cms.untracked.vstring('FILENAME')
+    fileNames = cms.untracked.vstring('file:FILENAME')
     )
 process.siPixelDigis.InputLabel = 'source'
 

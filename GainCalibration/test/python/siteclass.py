@@ -18,27 +18,23 @@ class site(object):
         self.siteName = args.ON_SITE
         self.indir = args.INDIR
         self.outdir = args.OUTDIR                    
-                     
-        self.sourceDir = args.SOURCEDIR
-        self.sourceSite = args.SOURCESITE
-        self.destDir = args.DESTDIR
-        self.destSite = args.DESTSITE
 
         #magic strings related to site (initialisation here)
-        self.remoteDir = 'unknown'
-        self.copyStr = 'unknown'
-        self.rmStr = 'unknown'
-        self.mkdirStr = 'unknown'
-        self.lsStr = 'unknown'
-        self.submitCall = 'unknown'
-        # self.incopystr = 'unknown'
-        # self.outcopystr = 'unknown'
-        self.prefix = ''
-        self.fileAccessStr = 'unknown'
-        self.xrootStr = 'unknown'
-        self.SxrootStr = 'unknown'
-        self.DxrootStr = 'unknown'
+        self.remoteDir = None
+        self.copyStr = None
+        self.rmStr = None
+        self.mkdirStr = None
+        self.lsStr = None
+        self.submitCall = None
+        self.prefix = None
+        self.fileAccessStr = None
+        self.xrootStr = None
+        self.haddcpStr = None
+        # self.mountStr = None
+        # self.umountStr = None
+        # self.mountPrefix = None
         
+        #mkdirStr not needed?
         if self.siteName == "T3":
             self.copyStr = "gfal-copy"
             self.rmStr = "gfal-rm"
@@ -46,83 +42,56 @@ class site(object):
             self.lsStr = "gfal-ls"
             self.remoteDir = "/scratch/"+os.environ['USER']
             self.prefix = 'file:////'
-            self.submitCall = "qsub OPTIONS -q all.q -j y -N NAME -o LOG FILE"
+            self.submitCall = "qsub OPTIONS -q long.q -j y -N NAME -o LOG FILE"
             self.fileAccessStr = "dcap://t3se01.psi.ch:22125/pnfs"
             self.xrootStr = "root://t3se01.psi.ch//"
-        if self.sourceSite == "T3":
-            self.SxrootStr = "root://t3se01.psi.ch//"
-        if self.sourceSite == "T3":
-            self.DxrootStr = "root://t3se01.psi.ch//"
+            self.haddcpStr = "file:////`pwd`/GainCalibration.root "+self.outdir+"/."
+            # self.mountStr = "gfalFS -s FOLDER "+self.indir
+            # self.umountStr = "gfalFS_umount -z FOLDER"
+            # self.mountPrefix = ''
       
         if self.siteName == "lxplusEOS":
-            self.copyStr = "put lxplus copy string here"
-
-            self.fileAccessStr = "root://eoscms//eos/cms/store"
-            
+            self.copyStr = "eos cp"
+            self.rmStr = "eos rm"
+            self.mkdirStr = "eos mkdir"
+            self.lsStr = "eos ls"
+            self.remoteDir = "/tmp/"+os.environ['USER']
+            self.prefix = ''
+            self.submitCall = "bsub -q cmscaf1nw -J NAME -eo LOG < FILE"
+            self.fileAccessStr = "root://eoscms//eos/cms/store"            
             self.xrootStr = "root://eoscms.cern.ch//eos/cms/"
-        if self.sourceSite == "lxplusEOS":
-            self.SxrootStr = "root://eoscms.cern.ch//eos/cms/"
-        if self.destSite == "lxplusEOS":
-            self.DxrootStr = "root://eoscms.cern.ch//eos/cms/"
+            self.haddcpStr = "GainCalibration.root root://eoscms//eos/cms/"+self.outdir+"/."
+            # self.mounStr = "eos -b fuse mount FOLDER"
+            # self.umountStr = "eos -b fuse umount FOLDER"
+            # self.mountPrefix = "/eos/cms/"
+
+    @classmethod
+    def empty(cls):
+        emptySite = siteHelper(RUNNUMBER = None, ON_SITE = None, INDIR = None, OUTDIR = None)
+        return cls(emptySite)
+        
+
+    def isValid(self):
+        if self.runNumber != None and self.indir != None and self.outdir != None:
+            return True
+        else:
+            return False
 
     def printInfo(self):
         print "Site Information:"
         print "  site:          ",self.siteName
         print "  indir:         ",self.indir
         print "  outdir:        ",self.outdir
-        print "  sourcedir:     ",self.sourceDir
-        print "  destdir:       ",self.destDir
         print "  copy string:   ",self.copyStr
         print "  prefix:        ",self.prefix
         print "  remove string: ",self.rmStr
         print "  mkdir string:  ",self.mkdirStr
         print "  ls string:     ",self.lsStr
         print "  remote dir:    ",self.remoteDir
+        print "  submission:    ",self.submitCall
+        print "  file access:   ",self.fileAccessStr
+        print "  xroot magic:   ",self.xrootStr
         print
-
-    def create_config(self):
-        f = open("config","w+")
-        f.write("run = {}\n".format(self.runNumber))
-        f.write("indir = {}\n".format(self.indir))
-        f.write("outdir = {}\n".format(self.outdir))
-        f.write("site = {}\n".format(self.siteName))
-        f.write("source = {}\n".format(self.sourceDir))
-        f.write("sourceSite = {}\n".format(self.sourceSite))
-        f.write("dest = {}\n".format(self.destDir))
-        f.write("destSite = {}\n".format(self.destSite))
-        f.write("\nCreated on: "+subprocess.check_output(["date"]))
-
-    def copyFromSource(self):
-        sourceDir = self.sourceDir
-        sourceDir = re.sub(r".*store","store",sourceDir)
-        #print sourceDir
-        indir = self.indir
-        indir = re.sub(r".*store","store",indir)
-        #print indir
-        
-        for i in range(40):
-            fileName = "GainCalibration_"+str(i)+"_"+self.runNumber+".dmp"
-            print "Copying: ",fileName
-            command = "xrdcp -f "+self.SxrootStr+sourceDir+"/"+fileName+" "+self.xrootStr+indir+"/."
-            #print "copy command: ",command
-            #print "splitted: ",command.split()
-            subprocess.call(command.split())
-
-    def copyToDest(self):
-        outdir = self.outdir
-        outdir = re.sub(r".*store","store",outdir)
-        #print outdir
-        destDir = self.destDir
-        destDir = re.sub(r".*store","store",destDir)
-        #print destDir
-        fileList = self.outdir.split()
-        
-        for i in fileList:
-            print "Copying: ",i
-            command = "xrdcp -f "+self.xrootStr+outdir+"/"+i+" "+self.DxrootStr+destDir+"/."
-            #print "copy command: ",command
-            #print "splitted: ",command.split()
-            subprocess.call(command.split())
 
     def clean_outDir(self):
         print "Recreating output directory."
@@ -132,4 +101,10 @@ class site(object):
         DEVNULL.close()
         if subprocess.call([self.mkdirStr,self.outdir]):
             raise RunError("Failed to create outdir.")
+
+    def resetSite(self,args):
+        print "Editing the source and destination settings."
+        self.siteName = args.ON_SITE
+        self.indir = args.INDIR
+        self.outdir = args.OUTDIR
 
