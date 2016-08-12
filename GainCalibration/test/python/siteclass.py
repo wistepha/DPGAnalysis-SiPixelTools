@@ -75,7 +75,7 @@ class site(object):
         
 
     def isValid(self):
-        if self.runNumber != None and self.indir != None and self.outdir != None:
+        if (self.runNumber != None) and (self.indir != None) and (self.outdir != None):
             return True
         else:
             return False
@@ -110,6 +110,7 @@ class site(object):
 
     def resetSite(self,args):
         print "Editing the source and destination settings."
+        self.runNumber = args.RUNNUMBER
         self.siteName = args.ON_SITE
         self.indir = args.INDIR
         self.outdir = args.OUTDIR

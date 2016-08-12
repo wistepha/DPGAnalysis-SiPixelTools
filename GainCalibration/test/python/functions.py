@@ -95,12 +95,21 @@ def create_config(sites):
     f.write("dest = {}\n".format(sites['destSite'].outdir))
     f.write("destSite = {}\n".format(sites['destSite'].siteName))
     f.write("\nCreated on: "+subprocess.check_output(["date"]))
+    f.close()
+
+def getVar(line):
+    var = line.split()[2]
+    if var == 'None':
+        return None
+    else:
+        return var
 
 def readFromConfig(RUNNUMBER):
     #Reads the necessary information to create the site objects from the config
     #file which is created during the 'create' step.
+    enterDir("Run_{}".format(RUNNUMBER))
     try:
-        f = open("Run_{}/config".format(RUNNUMBER))
+        f = open("config".format(RUNNUMBER),"r")
     except:
         raise RunError("Could not open config file.")
     runNumber = None
@@ -113,21 +122,21 @@ def readFromConfig(RUNNUMBER):
     destSiteName = None
     for line in f:
         if "run" in line:
-            runNumber = line.split()[2]
+            runNumber = getVar(line)
         elif "indir" in line:
-            indir = line.split()[2]
+            indir = getVar(line)
         elif "outdir" in line:
-            outdir = line.split()[2]
+            outdir = getVar(line)
         elif "site" in line:
-            siteName = line.split()[2]
-        elif "source" in line:
-            sourceDir = line.split()[2]
+            siteName = getVar(line)
         elif "sourceSite" in line:
-            sourceSiteName = line.split()[2]
-        elif "dest" in line:
-            destDir = line.split()[2]
+            sourceSiteName = getVar(line)
+        elif "source" in line:
+            sourceDir = getVar(line)
         elif "destSite" in line:
-            destSiteName = line.split()[2]
+            destSiteName = getVar(line)
+        elif "dest" in line:
+            destDir = getVar(line)
     try:
         current = siteHelper(RUNNUMBER = runNumber, ON_SITE = siteName, INDIR = indir, OUTDIR = outdir)
         source = siteHelper(RUNNUMBER = runNumber, ON_SITE = sourceSiteName, INDIR = sourceDir, OUTDIR = indir)
@@ -228,7 +237,7 @@ def hadd(currentSite):
         else:
             raise RunError("File {}.root is missing.".format(i))
     DEVNULL.close()
-    print command.split()
+    #print command.split()
     subprocess.call(command.split())
     print (currentSite.copyStr+" "+currentSite.haddcpStr).split()
     subprocess.call((currentSite.copyStr+" -f "+currentSite.haddcpStr),shell=True)
@@ -305,10 +314,12 @@ def copyToDest(currentSite,destSite):
     outdir = destSite.indir
     outdir = re.sub(r".*store","store",outdir)
     #print outdir
-    destDir = destDir.outdir
+    destDir = destSite.outdir
     destDir = re.sub(r".*store","store",destDir)
     #print destDir
-    fileList = outdir.split()
+    fileList = currentSite.lsStr+" "+currentSite.outdir
+    fileList = subprocess.check_output(fileList.split())
+    fileList = fileList.split()
     if fileList == []:
         print "Output directory is empty."
         return
@@ -534,15 +545,16 @@ def copySD(sites,args):
     #This method overwrites the config file. Therefore, it allows to
     #copy the files outsite the 'create' step.
 
-    # enterDir("Run_{}".format(sites['currentSite'].runNumber))
     if args.SOURCESITE != None:
-        newSource = siteHelper(RUNNUMNER = sites['currentSite'].runNumber, ON_SITE = args.SOURCESITE, INDIR = args.SOURCEDIR, OUTDIR = sites['currentSite'].indir)
+        print "entered source"
+        newSource = siteHelper(RUNNUMBER = sites['currentSite'].runNumber, ON_SITE = args.SOURCESITE, INDIR = args.SOURCEDIR, OUTDIR = sites['currentSite'].indir)
         sites['sourceSite'].resetSite(newSource)
     if args.DESTSITE != None:
-        newDest = siteHelper(RUNNUMNER = sites['currentSite'].runNumber, ON_SITE = args.DESTSITE, INDIR = sites['currentSite'].outdir, OUTDIR = args.DESTDIR)
+        newDest = siteHelper(RUNNUMBER = sites['currentSite'].runNumber, ON_SITE = args.DESTSITE, INDIR = sites['currentSite'].outdir, OUTDIR = args.DESTDIR)
         sites['destSite'].resetSite(newDest)
 
     create_config(sites)
+    sites = readFromConfig(args.RUNNUMBER)
     if not sites['currentSite'].isValid():
         raise("Invalid main site.")
     if sites['sourceSite'].isValid():
